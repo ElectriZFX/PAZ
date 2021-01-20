@@ -19,6 +19,8 @@ public:
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHostLobbyUpdated, FPAZLobbyInfo, FOnHostLobbyUpdated);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHostChatReceived, const FText&, FOnHostChatReceived);
+
 UCLASS()
 class PAZ_API APAZBeaconHostObject : public AOnlineBeaconHostObject
 {
@@ -32,10 +34,17 @@ protected:
 	UPROPERTY(BlueprintAssignable)
 		FHostLobbyUpdated FOnHostLobbyUpdated;
 
+	UPROPERTY(BlueprintAssignable)
+		FHostChatReceived FOnHostChatReceived;
+
+	FTimerHandle TInitialLobbyHandle;
+	void InitialLobbyHandling();
+
 	UFUNCTION(BlueprintCallable)
 		void UpdateLobbyInfo(FPAZLobbyInfo NewLobbyInfo);
 
 	void UpdateClientLobbyInfo();
+
 
 protected:
 	virtual void BeginPlay() override;
@@ -45,7 +54,12 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 		void ShutdownServer();
-		void DisconnectAllClients();
 
-		virtual void DisconnectClient(AOnlineBeaconClient* ClientActor) override;
+	void DisconnectAllClients();
+
+	virtual void DisconnectClient(AOnlineBeaconClient* ClientActor) override;
+
+public:
+	UFUNCTION(BlueprintCallable)
+	void SendChatToLobby(const FText& ChatMessage);
 };

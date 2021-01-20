@@ -6,6 +6,7 @@
 #include "PAZ/Public/PAZ/MainMenu/PAZMainMenuGameMode.h"
 
 #include "OnlineBeaconHost.h"
+#include "TimerManager.h"
 
 APAZBeaconHostObject::APAZBeaconHostObject()
 {
@@ -16,6 +17,12 @@ APAZBeaconHostObject::APAZBeaconHostObject()
 void APAZBeaconHostObject::BeginPlay()
 {
 	LobbyInfo.PlayerList.Add(FString("Host"));
+	GetWorld()->GetTimerManager().SetTimer(TInitialLobbyHandle, this, &APAZBeaconHostObject::InitialLobbyHandling, 0.2f, false);
+}
+
+void APAZBeaconHostObject::InitialLobbyHandling()
+{
+	UpdateLobbyInfo(LobbyInfo);
 }
 
 void APAZBeaconHostObject::UpdateLobbyInfo(FPAZLobbyInfo NewLobbyInfo)
@@ -48,7 +55,10 @@ void APAZBeaconHostObject::OnClientConnected(AOnlineBeaconClient* NewClientActor
 		LobbyInfo.PlayerList.Add(PlayerName);
 
 		if (APAZBeaconClient* Client = Cast<APAZBeaconClient>(NewClientActor))
+		{
 			Client->SetPlayerIndex(Index);
+			Client->SetPlayerName(PlayerName);
+		}
 
 		UE_LOG(LogTemp, Warning, TEXT("Connected Client Valid"));
 		FOnHostLobbyUpdated.Broadcast(LobbyInfo);
@@ -110,3 +120,15 @@ void APAZBeaconHostObject::DisconnectClient(AOnlineBeaconClient* ClientActor)
 	}
 }
 
+void APAZBeaconHostObject::SendChatToLobby(const FText& ChatMessage)
+{
+	FOnHostChatReceived.Broadcast(ChatMessage);
+
+	for (AOnlineBeaconClient* ClientBeacon : ClientActors)
+	{
+		if (APAZBeaconClient* Client = Cast<APAZBeaconClient>(ClientBeacon))
+		{
+			Client->Client_OnChatMessageReceived(ChatMessage);
+		}
+	}
+}

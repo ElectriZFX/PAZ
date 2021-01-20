@@ -12,6 +12,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDisconnected);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLobbyUpdated, FPAZLobbyInfo, FOnLobbyUpdated);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FChatReceived, const FText&, FOnChatReceived);
+
 UCLASS()
 class PAZ_API APAZBeaconClient : public AOnlineBeaconClient
 {
@@ -28,7 +30,11 @@ protected:
 	UPROPERTY(BlueprintAssignable)
 		FLobbyUpdated FOnLobbyUpdated;
 
+	UPROPERTY(BlueprintAssignable)
+		FChatReceived FOnChatReceived;
+
 	uint8 PlayerIndex;
+	FString PlayerName;
 
 protected:
 	UFUNCTION(BlueprintCallable)
@@ -40,6 +46,15 @@ protected:
 	virtual void OnFailure() override;
 	virtual void OnConnected() override;
 
+protected:
+	UFUNCTION(BlueprintCallable)
+		void SendChatMessage(const FText& ChatMessage);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+		void Server_SendChatMessage(const FText& ChatMessage);
+	bool Server_SendChatMessage_Validate(const FText& ChatMessage);
+	void Server_SendChatMessage_Implementation(const FText& ChatMessage);
+
 public:
 	UFUNCTION(Client, Reliable)
 		void Client_OnDisconnected();
@@ -49,7 +64,13 @@ public:
 		void Client_OnLobbyUpdated(FPAZLobbyInfo LobbyInfo);
 	void Client_OnLobbyUpdated_Implementation(FPAZLobbyInfo LobbyInfo);
 
-	void SetPlayerIndex(uint8 Index);
+	UFUNCTION(Client, Reliable)
+		void Client_OnChatMessageReceived(const FText& ChatMessage);
+	void Client_OnChatMessageReceived_Implementation(const FText& ChatMessage);
 
+	void SetPlayerIndex(uint8 Index);
 	uint8 GetPlayerIndex();
+
+	void SetPlayerName(const FString& NewPlayerName);
+	FString GetPlayerName();
 };

@@ -21,6 +21,32 @@ void APAZBeaconClient::OnConnected()
 	FOnConnected.Broadcast(true);
 }
 
+void APAZBeaconClient::SendChatMessage(const FText& ChatMessage)
+{
+	Server_SendChatMessage(ChatMessage);
+}
+
+bool APAZBeaconClient::Server_SendChatMessage_Validate(const FText& ChatMessage)
+{
+	return true;
+}
+
+void APAZBeaconClient::Server_SendChatMessage_Implementation(const FText& ChatMessage)
+{
+	FString Message = PlayerName + ": " + ChatMessage.ToString();
+	UE_LOG(LogTemp, Warning, TEXT("Chat: %s"), *Message); // Print message "Server"
+
+	if (APAZBeaconHostObject* Host = Cast<APAZBeaconHostObject>(BeaconOwner))
+	{
+		Host->SendChatToLobby(FText::FromString(Message));
+	}
+}
+
+void APAZBeaconClient::Client_OnChatMessageReceived_Implementation(const FText& ChatMessage)
+{
+	FOnChatReceived.Broadcast(ChatMessage);
+}
+
 void APAZBeaconClient::Client_OnDisconnected_Implementation()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Disconnected"));
@@ -40,6 +66,16 @@ void APAZBeaconClient::SetPlayerIndex(uint8 Index)
 uint8 APAZBeaconClient::GetPlayerIndex()
 {
 	return PlayerIndex;
+}
+
+void APAZBeaconClient::SetPlayerName(const FString& NewPlayerName)
+{
+	PlayerName = NewPlayerName;
+}
+
+FString APAZBeaconClient::GetPlayerName()
+{
+	return PlayerName;
 }
 
 bool APAZBeaconClient::ConnectToServer(const FString& Address)
