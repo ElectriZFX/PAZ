@@ -1,2 +1,3 @@
 # PAZ
-Post-Apocalyptic Zombies (UE4)
+Free open source project Post-Apocalyptic Zombies (UE4)
+
